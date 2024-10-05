@@ -88,33 +88,15 @@ int pBox[] = {
 
 int shiftTable[] = {1, 1, 2, 2, 2, 2, 2, 2, 1, 2, 2, 2, 2, 2, 2, 1};
 
+word permutate(word input, int* table, int inputSize, int outputSize) {
+    word output = 0;
+    for(int i = 0; i < outputSize; i++) {
+        int m = table[i] - 1;
+        output |= ((input >> (inputSize - 1 - m)) & 1) << (outputSize - 1 - i);
+    }
+    return output;
+}
 
-word permutate(word R) {
-	word ER = 0;
-	for(int i = 0; i < 32; i++) {
-		int m = pBox[i] - 1;
-		ER |= ((R >>  (31 - m) ) & 1) << (31 - i);
-	}
-	return ER;
-}
-word expand(word R) {
-	word ER = 0;
-	for(int i = 0; i < 48; i++) {
-		int m = expansionTable[i] - 1;
-		ER |= ((R >>  (31 - m)) & 1) << (47 - i);
-	}
-	return ER;
-
-}
-word compress(word key) {
-	word cKey = 0;
-	for(int i = 0; i < 48; i++) {
-		int m = compresionTable[i] - 1;
-		//cKey |= ((key >> (56 - m - 1)) & 1) << (47 - i);
-		cKey |= ((key >> (55 - m)) & 1) << (47 - i);
-	}
-	return cKey;
-}
 word bitShiftKey(word key, int round) {
 	word key1 = (key >> 28) & 0xFFFFFFF;
 	word key2 = key & 0xFFFFFFF;
@@ -156,7 +138,7 @@ int main() {
 
 	word x, y;
 
-	// expansion perm
+	/* // expansion perm
 	x = 0xF0AAF0AA;
 	y = expand(x);
 	std::cout << std::hex << y << "\n";
@@ -168,9 +150,27 @@ int main() {
 	std::cout << std::hex << y << "\n";
 	std::cout << (0x1B02EFFC7072 == y) << "\n\n";
 
-
+	// pbox perm
 	x = 0x5C82B597;
 	y = permutate(x);
+	std::cout << std::hex << y << "\n";
+	std::cout << (0x234AA9BB == y) << "\n\n"; */
+
+	// expansion perm
+	x = 0xF0AAF0AA;
+	y = permutate(x, expansionTable, 32, 48);
+	std::cout << std::hex << y << "\n";
+	std::cout << (0x7A15557A1555 == y) << "\n\n";
+
+	// compression perm
+	x = 0xE19955FAACCF1E;
+	y = permutate(x, compresionTable, 56, 48);
+	std::cout << std::hex << y << "\n";
+	std::cout << (0x1B02EFFC7072 == y) << "\n\n";
+
+	// pbox perm
+	x = 0x5C82B597;
+	y = permutate(x, pBox, 32, 32);
 	std::cout << std::hex << y << "\n";
 	std::cout << (0x234AA9BB == y) << "\n\n";
 }
