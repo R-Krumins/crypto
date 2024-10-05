@@ -32,6 +32,38 @@ int compresionTable[] = {
 	46, 42, 50, 36, 29, 32
 };
 
+int keyPermTable[] = {
+	57,   49,    41,   33,    25,    17,    9,
+	 1,   58,    50,   42,    34,    26,   18,
+	10,    2,    59,   51,    43,    35,   27,
+        19,   11,     3,   60,    52,    44,   36,
+        63,   55,    47,   39,    31 ,   23,   15,
+         7,   62,    54,   46,    38,    30,   22,
+        14,    6,    61,   53,    45,    37,   29,
+        21,   13,     5,   28,    20,    12,    4
+};
+
+int initialPermTable[] = {
+	58,    50,   42,    34,    26,   18,    10,    2,
+        60,    52,   44,    36,    28,   20,    12,    4,
+        62,    54,   46,    38,    30,   22,    14,    6,
+        64,    56,   48,    40,    32,   24,    16,    8,
+        57,    49,   41,    33,    25,   17,     9,    1,
+        59,    51,   43,    35,    27,   19,    11,    3,
+        61,    53,   45,    37,    29,   21,    13,    5,
+        63,    55,   47,    39,    31,   23,    15,    7
+};
+
+int finalPermTable[] = {
+	40,     8,   48,    16,    56,   24,    64,   32,
+        39,     7,   47,    15,    55,   23,    63,   31,
+        38,     6,   46,    14,    54,   22,    62,   30,
+        37,     5,   45,    13,    53,   21,    61,   29,
+        36,     4,   44,    12,    52,   20,    60,   28,
+        35,     3,   43,    11,    51,   19,    59,   27,
+        34,     2,   42,    10,    50,   18,    58,   26,
+        33,     1,   41,     9,    49,   17,    57,   25
+};
 
 short int sBoxes[8][64] = {
 	{14,  4,  13,  1,   2, 15,  11,  8,   3, 10,   6, 12,   5,  9,   0,  7,
@@ -121,56 +153,66 @@ word sBoxSubstitution(word R) {
 	return newR;
 }
 
-/*
-data* f(data* d, int roundCount) {
- 	if(roundCount == 0) return d;
+data createData(word text, word key) {
+	data d;
+	text = permutate(text, initialPermTable, 64, 64);
+	d.L = text & 0xFFFF;
+	d.R = text & 0xFFFF0000;
+	d.key = permutate(key, keyPermTable, 64, 56);
 
-	// Expansion Permutation
-	// Key XOR
-	// S-Box Substitution
-	//P-Box Permutation
-	//L XOR
+	return d;
+}
 
-} */
+
+data f(data& d, int round) {
+ 	if(round == 0) return d;
+	
+	word tempL = d.L;
+	d.L = d.R;
+
+	d.key = bitShiftKey(d.key, (16 - round));
+	d.R = permutate(d.R, expansionTable, 32, 48); 
+	word compressedKey = permutate(d.key, compresionTable, 56, 48);
+	d.R = d.R ^ compressedKey;
+	d.R = sBoxSubstitution(d.R);
+	d.R = permutate(d.R, pBox, 32, 32);
+	d.R = d.R ^ tempL;
+
+	round--;
+	return f(d, round);
+}
 
 
 int main() {
 
-	word x, y;
+	word text = 0x0123456789ABCDEF;
+	word key  = 0x133457799BBCDFF1;
 
-	/* // expansion perm
-	x = 0xF0AAF0AA;
-	y = expand(x);
-	std::cout << std::hex << y << "\n";
-	std::cout << (0x7A15557A1555 == y) << "\n\n";
+	data d = createData(text, key);
+	data fD = f(d, 16);
 
-	// compression perm
-	x = 0xE19955FAACCF1E;
-	y = compress(x);
-	std::cout << std::hex << y << "\n";
-	std::cout << (0x1B02EFFC7072 == y) << "\n\n";
+	std::cout << std::bitset<32>(d.L) << "\n";
+	std::cout << std::bitset<32>(d.R) << "\n";
 
-	// pbox perm
-	x = 0x5C82B597;
-	y = permutate(x);
-	std::cout << std::hex << y << "\n";
-	std::cout << (0x234AA9BB == y) << "\n\n"; */
+	word encrypted = fD.R | fD.L;
+	encrypted = permutate(encrypted, finalPermTable, 64, 64);
+	
+	std::cout << std::hex << encrypted << "\n";
 
+	/* word x, y;
 	// expansion perm
 	x = 0xF0AAF0AA;
 	y = permutate(x, expansionTable, 32, 48);
 	std::cout << std::hex << y << "\n";
 	std::cout << (0x7A15557A1555 == y) << "\n\n";
-
 	// compression perm
 	x = 0xE19955FAACCF1E;
 	y = permutate(x, compresionTable, 56, 48);
 	std::cout << std::hex << y << "\n";
 	std::cout << (0x1B02EFFC7072 == y) << "\n\n";
-
 	// pbox perm
 	x = 0x5C82B597;
 	y = permutate(x, pBox, 32, 32);
 	std::cout << std::hex << y << "\n";
-	std::cout << (0x234AA9BB == y) << "\n\n";
+	std::cout << (0x234AA9BB == y) << "\n\n"; */
 }
