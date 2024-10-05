@@ -101,7 +101,7 @@ word expand(word R) {
 	word ER = 0;
 	for(int i = 0; i < 48; i++) {
 		int m = expansionTable[i] - 1;
-		ER |= ((R >>  m) & 1) << i;
+		ER |= ((R >>  (31 - m)) & 1) << (47 - i);
 	}
 	return ER;
 
@@ -153,20 +153,24 @@ data* f(data* d, int roundCount) {
 
 
 int main() {
-	//word x = compress(0xE19955FAACCF1E);
-	/* word x = expand(0xF0AAF0AA);
-	std::cout << std::hex << x << "\n"; 
 
-	std::cout << std::bitset<64>(x); */
+	word x, y;
 
-
-	word x = 0x5C82B597;
-	word y = permutate(x);
+	// expansion perm
+	x = 0xF0AAF0AA;
+	y = expand(x);
 	std::cout << std::hex << y << "\n";
+	std::cout << (0x7A15557A1555 == y) << "\n\n";
+
+	// compression perm
+	x = 0xE19955FAACCF1E;
+	y = compress(x);
+	std::cout << std::hex << y << "\n";
+	std::cout << (0x1B02EFFC7072 == y) << "\n\n";
 
 
-	/* word x = 0x6117BA866527;
-	word y = sBoxSubstitution(x);
-	std::cout << std::bitset<64>(y) << "\n";
-	std::cout << std::hex << y << "\n"; */
+	x = 0x5C82B597;
+	y = permutate(x);
+	std::cout << std::hex << y << "\n";
+	std::cout << (0x234AA9BB == y) << "\n\n";
 }
