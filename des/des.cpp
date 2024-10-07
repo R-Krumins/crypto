@@ -1,15 +1,8 @@
 #include <iostream>
-#include <bitset>
 #include "des-tables.h"
 
 typedef unsigned long int word; //64 bit data type
 typedef char byte; 
-
-struct data {
-	word L;
-	word R;
-	word key;
-};
 
 word permutate(word input, int* table, int inputSize, int outputSize) {
     word output = 0;
@@ -44,37 +37,29 @@ word sBoxSubstitution(word R) {
 	return newR;
 }
 
-data createData(word text, word key) {
-	data d;
-	text = permutate(text, initialPermTable, 64, 64);
-	d.R = text & 0xFFFFFFFF;
-	d.L = text >> 32;
-	d.key = permutate(key, keyPermTable, 64, 56);
-
-	return d;
-}
-
-
-void f(data& d, word* keys, int round, bool encrypt) {
+void f(word& R, word& L, word* keys, int round, bool encrypt) {
  	if(round == 0) return;
 
-	word tempL = d.L;
-	d.L = d.R;
+	word tempL = L;
+	L = R;
 
 	int roundIndex = encrypt ? (16 - round) : (round - 1);
 
-	d.R = permutate(d.R, expansionTable, 32, 48); 
-	d.R = d.R ^ keys[roundIndex];
-	d.R = sBoxSubstitution(d.R);
-	d.R = permutate(d.R, pBox, 32, 32);
-	d.R = d.R ^ tempL;
+	R = permutate(R, expansionTable, 32, 48); 
+	R = R ^ keys[roundIndex];
+	R = sBoxSubstitution(R);
+	R = permutate(R, pBox, 32, 32);
+	R = R ^ tempL;
 	
 	round--;
-	f(d, keys, round, encrypt);
+	f(R, L, keys, round, encrypt);
 }
 
 word des(word text, word key, bool encrypt) {
-	data d = createData(text, key);
+	// generate R and L of the plain text
+	text = permutate(text, initialPermTable, 64, 64);
+	word R = text & 0xFFFFFFFF;
+	word L = text >> 32;
    
 	// genereate keys
 	word keys[16];
@@ -83,11 +68,12 @@ word des(word text, word key, bool encrypt) {
 		key = bitShiftKey(key, i);
 		keys[i] = permutate(key, compresionTable, 56, 48);
 	}
+   
+	// Perform main DES algoritym
+	f(R, L, keys, 16, encrypt);
     
-	f(d, keys, 16, encrypt);
-    
-	// Combine L and R parts to get the final result
-	word result = ((word)d.R << 32) | d.L;
+	// Combine L an R to get the final result
+	word result = ((word)R << 32) | L;
 	result = permutate(result, finalPermTable, 64, 64);
 	return result;
 }
