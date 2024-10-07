@@ -55,29 +55,38 @@ data createData(word text, word key) {
 }
 
 
-void f(data& d, int round, bool encrypt) {
+void f(data& d, word* keys, int round, bool encrypt) {
  	if(round == 0) return;
 
 	word tempL = d.L;
 	d.L = d.R;
 
 	int roundIndex = encrypt ? (16 - round) : (round - 1);
-	d.key = bitShiftKey(d.key, roundIndex);
 
 	d.R = permutate(d.R, expansionTable, 32, 48); 
-	word compressedKey = permutate(d.key, compresionTable, 56, 48);
-	d.R = d.R ^ compressedKey;
+	d.R = d.R ^ keys[roundIndex];
 	d.R = sBoxSubstitution(d.R);
 	d.R = permutate(d.R, pBox, 32, 32);
 	d.R = d.R ^ tempL;
 	
 	round--;
-	f(d, round, encrypt);
+	f(d, keys, round, encrypt);
 }
 
 word des(word text, word key, bool encrypt) {
 	data d = createData(text, key);
-	f(d, 16, encrypt);
+   
+	// genereate keys
+	word keys[16];
+	key = permutate(key, keyPermTable, 64, 56);
+	for (int i = 0; i < 16; i++) {
+		key = bitShiftKey(key, i);
+		keys[i] = permutate(key, compresionTable, 56, 48);
+	}
+    
+	f(d, keys, 16, encrypt);
+    
+	// Combine L and R parts to get the final result
 	word result = ((word)d.R << 32) | d.L;
 	result = permutate(result, finalPermTable, 64, 64);
 	return result;
@@ -88,7 +97,7 @@ int main() {
 	word key = 0x133457799BBCDFF1;
 
 
-	std::cout << "Plain Text: " << std::hex << plaintext << "\n";
+	std::cout << "PlainText: " << std::hex << plaintext << "\n";
 	// Encrypt the plaintext
 	word encrypted = des(plaintext, key, true);
 	std::cout << "Encrypted: " << std::hex << encrypted << "\n";
