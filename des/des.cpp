@@ -27,8 +27,11 @@ word bitShiftKey(word key, int round) {
 	int n = shiftTable[round];
 	key1 = (key1 << n) | (key1 >> (28-n));
 	key2 = (key2 << n) | (key2 >> (28-n));
-	
+
+	std::cout << "C: " << std::bitset<28>(key1) << "\n";
+	std::cout << "D: " << std::bitset<28>(key2) << "\n";
 	key = (key1 << 28) | key2;
+	std::cout << "shifted K: " << std::bitset<56>(key) << "\n";
 	return key;
 }
 
@@ -58,6 +61,8 @@ data createData(word text, word key) {
 void f(data& d, int round) {
  	if(round == 0) return;
 	
+	std::cout << "Round " << (17-round) << "\n";
+
 	word tempL = d.L;
 	d.L = d.R;
 
@@ -68,7 +73,9 @@ void f(data& d, int round) {
 	d.R = sBoxSubstitution(d.R);
 	d.R = permutate(d.R, pBox, 32, 32);
 	d.R = d.R ^ tempL;
-
+	
+	std::cout << "C Key: " << std::bitset<48>(compressedKey) << "\n";
+	std::cout << "\n";
 	round--;
 	f(d, round);
 }
@@ -76,7 +83,7 @@ void f(data& d, int round) {
 
 int main() {
 
-	/* word text = 0x0123456789ABCDEF;
+	word text = 0x0123456789ABCDEF;
 	word key  = 0x133457799BBCDFF1;
 
 	data d = createData(text, key);
@@ -88,9 +95,9 @@ int main() {
 	word encrypted = ((word)d.R << 32) | d.L;
 	encrypted = permutate(encrypted, finalPermTable, 64, 64);
 	
-	std::cout << std::hex << encrypted << "\n"; */
+	std::cout << std::hex << encrypted << "\n";
 
-	word x, y;
+	/* word x, y;
 	// expansion perm
 	x = 0xF0AAF0AA;
 	y = permutate(x, expansionTable, 32, 48);
@@ -110,5 +117,5 @@ int main() {
 	x = 0x6117BA866527;
 	y = sBoxSubstitution(x);
 	std::cout << std::hex << y << "\n";
-	std::cout << (0x5C82B597 == y) << "\n\n";
+	std::cout << (0x5C82B597 == y) << "\n\n"; */
 }
