@@ -1,16 +1,6 @@
-#include <iostream>
-#include <bitset>
+#pragma once
 
-typedef unsigned long int word; //64 bit data type
-typedef char byte; 
-
-struct data {
-	word L;
-	word R;
-	word key;
-};
-
-int expansionTable[] = {
+inline int expansionTable[] = {
 	32,  1,  2,  3,  4,  5,  
 	 4,  5,  6,  7,  8,  9,
 	 8,  9, 10, 11, 12, 13,
@@ -21,7 +11,7 @@ int expansionTable[] = {
 	28, 29, 30, 31, 32,  1
 };
 
-int compresionTable[] = {
+inline int compresionTable[] = {
 	14, 17, 11, 24,  1,  5,
 	 3, 28, 15,  6, 21, 10,
 	23, 19, 12,  4, 26,  8,
@@ -32,7 +22,7 @@ int compresionTable[] = {
 	46, 42, 50, 36, 29, 32
 };
 
-int keyPermTable[] = {
+inline int keyPermTable[] = {
 	57,   49,    41,   33,    25,    17,    9,
 	 1,   58,    50,   42,    34,    26,   18,
 	10,    2,    59,   51,    43,    35,   27,
@@ -43,7 +33,7 @@ int keyPermTable[] = {
         21,   13,     5,   28,    20,    12,    4
 };
 
-int initialPermTable[] = {
+inline int initialPermTable[] = {
 	58,    50,   42,    34,    26,   18,    10,    2,
         60,    52,   44,    36,    28,   20,    12,    4,
         62,    54,   46,    38,    30,   22,    14,    6,
@@ -54,7 +44,7 @@ int initialPermTable[] = {
         63,    55,   47,    39,    31,   23,    15,    7
 };
 
-int finalPermTable[] = {
+inline int finalPermTable[] = {
 	40,     8,   48,    16,    56,   24,    64,   32,
         39,     7,   47,    15,    55,   23,    63,   31,
         38,     6,   46,    14,    54,   22,    62,   30,
@@ -65,7 +55,7 @@ int finalPermTable[] = {
         33,     1,   41,     9,    49,   17,    57,   25
 };
 
-short int sBoxes[8][64] = {
+inline short int sBoxes[8][64] = {
 	{14,  4,  13,  1,   2, 15,  11,  8,   3, 10,   6, 12,   5,  9,   0,  7,
       0, 15,   7,  4,  14,  2,  13,  1,  10,  6,  12, 11,   9,  5,   3,  8,
       4,  1,  14,  8,  13,  6,   2, 11,  15 ,12,   9,  7,   3, 10,   5,  0,
@@ -107,7 +97,7 @@ short int sBoxes[8][64] = {
       2,  1,  14,  7,   4, 10,   8, 13,  15, 12,   9,  0,   3,  5,   6, 11}
 };
 
-int pBox[] = {
+inline int pBox[] = {
 	16,   7,  20,  21,
 	29,  12,  28,  17,
         1,  15,  23,  26,
@@ -118,101 +108,4 @@ int pBox[] = {
         22,  11,   4,  25
 };
 
-int shiftTable[] = {1, 1, 2, 2, 2, 2, 2, 2, 1, 2, 2, 2, 2, 2, 2, 1};
-
-word permutate(word input, int* table, int inputSize, int outputSize) {
-    word output = 0;
-    for(int i = 0; i < outputSize; i++) {
-        int m = table[i] - 1;
-        output |= ((input >> (inputSize - 1 - m)) & 1) << (outputSize - 1 - i);
-    }
-    return output;
-}
-
-word bitShiftKey(word key, int round) {
-	word key1 = (key >> 28) & 0xFFFFFFF;
-	word key2 = key & 0xFFFFFFF;
-	
-	int n = shiftTable[round];
-	key1 = (key1 << n) | (key1 >> (28-n));
-	key2 = (key2 << n) | (key2 >> (28-n));
-	
-	key = (key1 << 28) | key2;
-	return key;
-}
-
-word sBoxSubstitution(word R) {
-	word newR = 0;
-	for(int i = 0; i < 8; i++) {
-		byte b = (byte)(R >> (42 - i*6)) & 0x3F;
-		int row = (b & 0x20) >> 4 | (b & 0x1); 
-		int col = (b & 0x1E) >> 1; 
-		newR |= ((word)sBoxes[i][row * 16 + col]) << (28 - i*4); 
-	}
-
-	return newR;
-}
-
-data createData(word text, word key) {
-	data d;
-	text = permutate(text, initialPermTable, 64, 64);
-	d.L = text & 0xFFFF;
-	d.R = text & 0xFFFF0000;
-	d.key = permutate(key, keyPermTable, 64, 56);
-
-	return d;
-}
-
-
-data f(data& d, int round) {
- 	if(round == 0) return d;
-	
-	word tempL = d.L;
-	d.L = d.R;
-
-	d.key = bitShiftKey(d.key, (16 - round));
-	d.R = permutate(d.R, expansionTable, 32, 48); 
-	word compressedKey = permutate(d.key, compresionTable, 56, 48);
-	d.R = d.R ^ compressedKey;
-	d.R = sBoxSubstitution(d.R);
-	d.R = permutate(d.R, pBox, 32, 32);
-	d.R = d.R ^ tempL;
-
-	round--;
-	return f(d, round);
-}
-
-
-int main() {
-
-	word text = 0x0123456789ABCDEF;
-	word key  = 0x133457799BBCDFF1;
-
-	data d = createData(text, key);
-	data fD = f(d, 16);
-
-	std::cout << std::bitset<32>(d.L) << "\n";
-	std::cout << std::bitset<32>(d.R) << "\n";
-
-	word encrypted = fD.R | fD.L;
-	encrypted = permutate(encrypted, finalPermTable, 64, 64);
-	
-	std::cout << std::hex << encrypted << "\n";
-
-	/* word x, y;
-	// expansion perm
-	x = 0xF0AAF0AA;
-	y = permutate(x, expansionTable, 32, 48);
-	std::cout << std::hex << y << "\n";
-	std::cout << (0x7A15557A1555 == y) << "\n\n";
-	// compression perm
-	x = 0xE19955FAACCF1E;
-	y = permutate(x, compresionTable, 56, 48);
-	std::cout << std::hex << y << "\n";
-	std::cout << (0x1B02EFFC7072 == y) << "\n\n";
-	// pbox perm
-	x = 0x5C82B597;
-	y = permutate(x, pBox, 32, 32);
-	std::cout << std::hex << y << "\n";
-	std::cout << (0x234AA9BB == y) << "\n\n"; */
-}
+inline int shiftTable[] = {1, 1, 2, 2, 2, 2, 2, 2, 1, 2, 2, 2, 2, 2, 2, 1};
