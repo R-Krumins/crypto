@@ -1,9 +1,9 @@
-#include <iostream>
 #include "des-tables.h"
+#include "utility.h"
+#include <vector>
+#include "des.h"
 
-typedef unsigned long int word; //64 bit data type
-typedef char byte; 
-
+namespace DES {
 word permutate(word input, int* table, int inputSize, int outputSize) {
     word output = 0;
     for(int i = 0; i < outputSize; i++) {
@@ -86,19 +86,24 @@ word tripleDes(word text, word key1, word key2, bool encrypt) {
 	return step3;
 }
 
-int main() {
-	word plaintext = 0x0123456789ABCDEF;
-	word key =  0x133457799BBCDFF1;
-	word key2 = 0x563452299BBADFF1;
+std::vector<word> encrypt(const char* plaintext, word key) {
+	std::vector<word> plainChunks = stringToChunks(plaintext);
+	std::vector<word> encryptedChunks;
 
+	for(const auto& chunk: plainChunks) {
+		encryptedChunks.push_back(des(chunk, key, true));
+	}
 
-	std::cout << "PlainText: " << std::hex << plaintext << "\n";
-	// Encrypt the plaintext
-	word encrypted = tripleDes(plaintext, key, key2, true);
-	std::cout << "Encrypted: " << std::hex << encrypted << "\n";
-
-	// Decrypt the ciphertext
-	word decrypted = tripleDes(encrypted, key, key2, false);
-	std::cout << "Decrypted: " << std::hex << decrypted << "\n";
+	return encryptedChunks;
+	 
 }
+std::string decrypt(std::vector<word> encryptedChunks, word key) {
+	std::vector<word> decryptedChunks;
 
+	for(const auto& chunk : encryptedChunks) {
+		decryptedChunks.push_back(des(chunk, key, false));
+	}
+
+	return chunksToString(decryptedChunks);
+}
+}
