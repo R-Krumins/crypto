@@ -7,6 +7,6 @@
 typedef uint64_t word; //64 bit data type
 typedef char byte; 
 
-std::vector<uint64_t> stringToChunks(const char* input);
+std::vector<word> stringToChunks(const char* input);
 std::string chunksToString(const std::vector<uint64_t>& chunks);
 void printEncryptedChunks(const std::vector<word>& chunks);

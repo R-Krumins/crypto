@@ -6,6 +6,7 @@ project(des
 
 add_executable(${PROJECT_NAME} main.cpp
   des.cpp
+  caeser.cpp
   utility.cpp
   args.cpp
 )
