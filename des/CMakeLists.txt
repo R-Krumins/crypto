@@ -4,4 +4,8 @@ project(des
   DESCRIPTION "DES encryption algorithm"
   LANGUAGES CXX)
 
-add_executable(${PROJECT_NAME} main.cpp des.cpp utility.cpp)
+add_executable(${PROJECT_NAME} main.cpp
+  des.cpp
+  utility.cpp
+  args.cpp
+)
