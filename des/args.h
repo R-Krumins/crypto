@@ -4,9 +4,8 @@
 #include <cstdlib>  
 
 namespace Args {
-	enum class Algo {NONE, CAESER , DES};
-	extern Algo selectedAlgo;
-	extern const char* plaintext;
+	extern std::string selectedAlgo;
+	extern std::string plaintext;
 	extern word key;
 	extern int intKey;
 

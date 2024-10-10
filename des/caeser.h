@@ -4,6 +4,6 @@
 #include <iostream>
 
 namespace Caeser {
-	void encrypt(char* encrypted, const char* plaintext, int key);
-	void decrypt(char* decrypted, const char* encrypted, int key);	
+	std::string encrypt(std::string input, int key);
+	std::string decrypt(std::string input, int key);	
 }

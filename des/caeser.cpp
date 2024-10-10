@@ -2,22 +2,23 @@
 
 namespace Caeser {
 
-	void encrypt(char* encrypted, const char* plaintext, int key) {
-		int i = 0;
-		while(plaintext[i] != 0) {
-			char c = plaintext[i];
+	std::string encrypt(std::string input, int key) {
+		std::string output;
+		output.resize(input.length());
+
+		for (char& c : input) {
 			if(c >= 'A' && c <= 'Z')
-				encrypted[i] = (c - 'A' + key + 26) % 26 + 'A';
+				output.push_back((c - 'A' + key + 26) % 26 + 'A');
 			else if(c >= 'a' && c <= 'z')
-				encrypted[i] = (c - 'a' + key + 26) % 26 + 'a';
+				output.push_back((c - 'a' + key + 26) % 26 + 'a');
 			else
-				encrypted[i] = c;
-			i++;
+				output.push_back(c);
 		}
-		encrypted[i] = 0;
+		
+		return output;
 	}
 
-	void decrypt(char* decrypted, const char* encrypted, int key) {
-		encrypt(decrypted, encrypted, -key);
+	std::string decrypt(std::string input, int key) {
+		return encrypt(input, -key);
 	}
 }
