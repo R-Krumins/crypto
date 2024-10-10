@@ -1,7 +1,10 @@
+#include <cstdint>
 #include <cstring> // For std::memcpy
 #include "utility.h"
 #include <iostream>
+#include <ostream>
 
+namespace util {
 std::vector<word> stringToChunks(const char* input) {
     size_t len = std::strlen(input); // Get length of the input string
     size_t paddedLength = ((len + 7) / 8) * 8; // Calculate the required length divisible by 8
@@ -47,4 +50,17 @@ void printEncryptedChunks(const std::vector<word>& chunks) {
         std::cout << std::hex << chunk << " ";
     }
     std::cout << std::endl;
+}
+
+void printBin(uint32_t* ptr, int size) {
+    for(int i = 0; i < size; i++) {
+        const int size = sizeof(uint32_t)*8;
+        std::bitset<size> bits(ptr[i]);
+        std::string str = bits.to_string(); 
+        for(int j = size; j >= 0; j-=8) {
+            std::cout << str.substr(j, 8) << " ";
+        }
+        std::cout << std::endl;
+    }
+}
 }
